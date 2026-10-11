@@ -10,6 +10,8 @@ export function OrderSuccess() {
   const params = useSearchParams();
   const id = params.get("id");
   const total = Number(params.get("total"));
+  const payment = params.get("payment");
+  const warning = params.get("warning");
 
   return (
     <div className="flex flex-col items-center gap-5 rounded-[28px] bg-cream px-6 py-14 text-center">
@@ -23,11 +25,23 @@ export function OrderSuccess() {
           {Number.isFinite(total) && total > 0 && <> · মোট {formatPrice(total)}</>}
         </p>
       )}
+      {payment === "paid" && (
+        <p className="rounded-xl bg-white px-4 py-3 font-semibold text-[#17703d]">বিকাশ পেমেন্ট সফল হয়েছে।</p>
+      )}
+      {payment === "failed" && (
+        <p className="rounded-xl bg-white px-4 py-3 font-semibold text-brand-dark">
+          বিকাশ পেমেন্ট সম্পন্ন হয়নি। চিন্তা নেই — অর্ডারটি রাখা আছে, আমরা ফোন করে পেমেন্টের ব্যবস্থা করব।
+        </p>
+      )}
+      {warning && <p className="rounded-xl bg-white px-4 py-3 font-semibold text-brand-dark">{warning}</p>}
       <p className="max-w-md text-soft">
         খুব শীঘ্রই আমাদের প্রতিনিধি আপনাকে ফোন করে অর্ডার কনফার্ম করবেন। কোনো প্রশ্ন থাকলে কল করুন{" "}
         <a href={`tel:${site.phone}`} className="font-semibold underline">{site.phone}</a>।
       </p>
       <div className="flex flex-wrap justify-center gap-3">
+        <Link href={`/track?code=${encodeURIComponent(id ?? "")}`} className="inline-flex h-12 items-center rounded-xl border-[1.5px] border-ink px-6 font-bold hover:bg-white">
+          অর্ডার ট্র্যাক করুন
+        </Link>
         <Link href="/" className="inline-flex h-12 items-center rounded-xl bg-brand px-6 font-bold text-white hover:bg-brand-dark">
           হোমে ফিরে যান
         </Link>

@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { site } from "@/config/site";
-import { cart, useCartDetails } from "@/lib/cart-store";
+import { cart, useCart } from "@/lib/cart-store";
 import { formatPrice, toBn } from "@/lib/format";
 import { deliveryCharge, deliveryZoneLabels, type DeliveryZone } from "@/lib/shipping";
-import type { PaymentMethod } from "@/lib/order";
+import type { CustomerProfile } from "@/lib/customers";
+
+type PaymentMethod = "cod" | "bkash_manual" | "bkash_online";
 
 const inputClass =
   "h-12 w-full rounded-xl border-[1.5px] border-line-strong bg-white px-4 outline-none focus:border-ink";
@@ -37,10 +39,10 @@ function Radio({
   );
 }
 
-export function CheckoutForm() {
+export function CheckoutForm({ customer, bkashOnline }: { customer: CustomerProfile | null; bkashOnline: boolean }) {
   const router = useRouter();
-  const { items, subtotal } = useCartDetails();
-  const [zone, setZone] = useState<DeliveryZone>("inside");
+  const { items, subtotal } = useCart();
+  const [zone, setZone] = useState<DeliveryZone>(customer?.zone ?? "inside");
   const [payment, setPayment] = useState<PaymentMethod>("cod");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,14 +83,19 @@ export function CheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data: { id?: string; total?: number; error?: string } = await res.json();
+      const data: { id?: string; total?: number; error?: string; redirect?: string; warning?: string } = await res.json();
       if (!res.ok || !data.id) {
         setError(data.error ?? "অর্ডার পাঠানো যায়নি। আবার চেষ্টা করুন।");
         setSubmitting(false);
         return;
       }
-      router.replace(`/order-success?id=${encodeURIComponent(data.id)}&total=${data.total ?? total}`);
       cart.clear();
+      if (data.redirect) {
+        window.location.assign(data.redirect);
+        return;
+      }
+      const warn = data.warning ? `&warning=${encodeURIComponent(data.warning)}` : "";
+      router.replace(`/order-success?id=${encodeURIComponent(data.id)}&total=${data.total ?? total}${warn}`);
     } catch {
       setError("ইন্টারনেট সংযোগে সমস্যা। আবার চেষ্টা করুন।");
       setSubmitting(false);
@@ -102,7 +109,7 @@ export function CheckoutForm() {
           <legend className="mb-3 font-bangla text-xl font-bold">ডেলিভারির তথ্য</legend>
           <div>
             <label htmlFor="name" className="mb-1.5 block font-semibold">আপনার নাম *</label>
-            <input id="name" name="name" required minLength={2} autoComplete="name" className={inputClass} />
+            <input id="name" name="name" required minLength={2} autoComplete="name" defaultValue={customer?.name} className={inputClass} />
           </div>
           <div>
             <label htmlFor="phone" className="mb-1.5 block font-semibold">মোবাইল নম্বর *</label>
@@ -113,6 +120,7 @@ export function CheckoutForm() {
               required
               inputMode="numeric"
               autoComplete="tel"
+              defaultValue={customer?.phone}
               placeholder="01XXXXXXXXX"
               pattern="(\+?88)?01[3-9][0-9]{8}"
               title="১১ সংখ্যার মোবাইল নম্বর, যেমন 01712345678"
@@ -128,6 +136,7 @@ export function CheckoutForm() {
               minLength={8}
               rows={3}
               autoComplete="street-address"
+              defaultValue={customer?.address}
               placeholder="বাসা/রোড নম্বর, এলাকা, থানা, জেলা"
               className={`${inputClass} h-auto py-3`}
             />
@@ -152,11 +161,17 @@ export function CheckoutForm() {
             <span className="font-semibold">ক্যাশ অন ডেলিভারি</span>
             <span className="text-sm text-muted">পণ্য হাতে পেয়ে টাকা দিন</span>
           </Radio>
-          <Radio name="payment" value="bkash" checked={payment === "bkash"} onChange={() => setPayment("bkash")}>
-            <span className="font-semibold">bKash</span>
-            <span className="text-sm text-muted">আগে পেমেন্ট করুন</span>
+          {bkashOnline && (
+            <Radio name="payment" value="bkash_online" checked={payment === "bkash_online"} onChange={() => setPayment("bkash_online")}>
+              <span className="font-semibold">বিকাশে অনলাইন পেমেন্ট</span>
+              <span className="text-sm text-muted">বিকাশ পেজে গিয়ে পিন দিয়ে পেমেন্ট</span>
+            </Radio>
+          )}
+          <Radio name="payment" value="bkash_manual" checked={payment === "bkash_manual"} onChange={() => setPayment("bkash_manual")}>
+            <span className="font-semibold">বিকাশে সেন্ড মানি</span>
+            <span className="text-sm text-muted">টাকা পাঠিয়ে ট্রানজেকশন আইডি দিন</span>
           </Radio>
-          {payment === "bkash" && (
+          {payment === "bkash_manual" && (
             <div className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-5">
               <ol className="list-decimal space-y-1 pl-5 text-soft">
                 <li>বিকাশ অ্যাপ থেকে <b>{site.bkashType === "Merchant" ? "Payment" : "Send Money"}</b> বেছে নিন।</li>
@@ -189,9 +204,9 @@ export function CheckoutForm() {
           {items.map((i) => (
             <li key={`${i.slug}-${i.size}-${i.color ?? ""}`} className="flex justify-between gap-3">
               <span>
-                {i.product.name} <span className="text-muted">({i.size}) × {toBn(i.qty)}</span>
+                {i.name} <span className="text-muted">({i.size}) × {toBn(i.qty)}</span>
               </span>
-              <span className="shrink-0 font-semibold">{formatPrice(i.lineTotal)}</span>
+              <span className="shrink-0 font-semibold">{formatPrice(i.price * i.qty)}</span>
             </li>
           ))}
         </ul>
@@ -208,7 +223,7 @@ export function CheckoutForm() {
           disabled={submitting}
           className="h-13 rounded-xl bg-brand font-bold text-white hover:bg-brand-dark disabled:opacity-60"
         >
-          {submitting ? "অর্ডার পাঠানো হচ্ছে…" : "অর্ডার কনফার্ম করুন"}
+          {submitting ? "অর্ডার পাঠানো হচ্ছে…" : payment === "bkash_online" ? "বিকাশে পেমেন্ট করুন" : "অর্ডার কনফার্ম করুন"}
         </button>
         <p className="text-center text-xs text-soft">অর্ডারের পর আমরা ফোন করে কনফার্ম করব।</p>
       </aside>

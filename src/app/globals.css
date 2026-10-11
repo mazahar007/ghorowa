@@ -26,3 +26,16 @@ body {
   outline: 3px solid var(--color-brand);
   outline-offset: 2px;
 }
+
+@keyframes slide-up {
+  from { transform: translateY(24px); opacity: 0; }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+}
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+}

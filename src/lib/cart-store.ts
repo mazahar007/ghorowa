@@ -1,38 +1,47 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { getProduct } from "@/data/catalog";
 
 export type CartLine = {
   slug: string;
   size: string;
   color?: string;
   qty: number;
+  /** কার্টে দেখানোর জন্য পণ্যের তথ্যের কপি; অর্ডারের সময় সার্ভার আসল দাম ধরে। */
+  name: string;
+  price: number;
+  image?: string;
 };
 
-const STORAGE_KEY = "ghorowa-cart-v1";
+export type LineKey = Pick<CartLine, "slug" | "size" | "color">;
+
+const STORAGE_KEY = "ghorowa-cart-v2";
 const MAX_QTY = 20;
 const EMPTY: CartLine[] = [];
 
 let lines: CartLine[] = EMPTY;
 let loaded = false;
+let drawerOpen = false;
 const listeners = new Set<() => void>();
+const drawerListeners = new Set<() => void>();
+
+function isLine(l: unknown): l is CartLine {
+  const x = l as CartLine;
+  return (
+    typeof x?.slug === "string" &&
+    typeof x.size === "string" &&
+    typeof x.qty === "number" &&
+    typeof x.name === "string" &&
+    typeof x.price === "number"
+  );
+}
 
 function load() {
   if (loaded || typeof window === "undefined") return;
   loaded = true;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(parsed)) {
-      lines = parsed.filter(
-        (l): l is CartLine =>
-          typeof l?.slug === "string" &&
-          typeof l?.size === "string" &&
-          typeof l?.qty === "number" &&
-          Boolean(getProduct(l.slug)),
-      );
-    }
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]");
+    lines = Array.isArray(parsed) ? parsed.filter(isLine) : EMPTY;
   } catch {
     lines = EMPTY;
   }
@@ -65,16 +74,7 @@ function subscribe(listener: () => void) {
   };
 }
 
-function getSnapshot() {
-  load();
-  return lines;
-}
-
-function getServerSnapshot() {
-  return EMPTY;
-}
-
-const sameLine = (a: CartLine, b: Omit<CartLine, "qty">) =>
+const sameLine = (a: LineKey, b: LineKey) =>
   a.slug === b.slug && a.size === b.size && (a.color ?? "") === (b.color ?? "");
 
 export const cart = {
@@ -82,19 +82,19 @@ export const cart = {
     load();
     const existing = lines.find((l) => sameLine(l, item));
     if (existing) {
-      commit(lines.map((l) => (l === existing ? { ...l, qty: Math.min(MAX_QTY, l.qty + qty) } : l)));
+      commit(lines.map((l) => (l === existing ? { ...l, ...item, qty: Math.min(MAX_QTY, l.qty + qty) } : l)));
     } else {
       commit([...lines, { ...item, qty: Math.min(MAX_QTY, qty) }]);
     }
   },
-  setQty(item: Omit<CartLine, "qty">, qty: number) {
+  setQty(key: LineKey, qty: number) {
     load();
-    if (qty <= 0) return cart.remove(item);
-    commit(lines.map((l) => (sameLine(l, item) ? { ...l, qty: Math.min(MAX_QTY, qty) } : l)));
+    if (qty <= 0) return cart.remove(key);
+    commit(lines.map((l) => (sameLine(l, key) ? { ...l, qty: Math.min(MAX_QTY, qty) } : l)));
   },
-  remove(item: Omit<CartLine, "qty">) {
+  remove(key: LineKey) {
     load();
-    commit(lines.filter((l) => !sameLine(l, item)));
+    commit(lines.filter((l) => !sameLine(l, key)));
   },
   clear() {
     commit([]);
@@ -102,17 +102,37 @@ export const cart = {
 };
 
 export function useCart() {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const items = useSyncExternalStore(
+    subscribe,
+    () => {
+      load();
+      return lines;
+    },
+    () => EMPTY,
+  );
+  const count = items.reduce((n, l) => n + l.qty, 0);
+  const subtotal = items.reduce((n, l) => n + l.price * l.qty, 0);
+  return { items, count, subtotal };
 }
 
-/** কার্টের প্রতিটি লাইনের সাথে পণ্যের তথ্য ও মোট দাম। */
-export function useCartDetails() {
-  const items = useCart();
-  const detailed = items.flatMap((line) => {
-    const product = getProduct(line.slug);
-    return product ? [{ ...line, product, lineTotal: product.price * line.qty }] : [];
-  });
-  const count = detailed.reduce((n, l) => n + l.qty, 0);
-  const subtotal = detailed.reduce((n, l) => n + l.lineTotal, 0);
-  return { items: detailed, count, subtotal };
+export const cartDrawer = {
+  open() {
+    drawerOpen = true;
+    drawerListeners.forEach((l) => l());
+  },
+  close() {
+    drawerOpen = false;
+    drawerListeners.forEach((l) => l());
+  },
+};
+
+export function useCartDrawerOpen() {
+  return useSyncExternalStore(
+    (l) => {
+      drawerListeners.add(l);
+      return () => drawerListeners.delete(l);
+    },
+    () => drawerOpen,
+    () => false,
+  );
 }

@@ -1,87 +1,63 @@
 import "server-only";
-import { appendFile, mkdir } from "node:fs/promises";
-import path from "node:path";
-import type { Order } from "./order";
-import { deliveryZoneLabels } from "./shipping";
+import type { OrderRow } from "@/db/schema";
+import { paymentMethodLabels } from "./labels";
+import { deliveryZoneLabels, type DeliveryZone } from "./shipping";
+
+type Line = { name: string; size: string; color: string | null; qty: number };
 
 /**
- * অর্ডার কোথায় যাবে:
- *  - ORDER_WEBHOOK_URL: Google Sheet (Apps Script) বা যেকোনো ওয়েবহুকে JSON পাঠায়
- *  - TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID: টেলিগ্রামে নতুন অর্ডারের নোটিফিকেশন
- *  - লোকাল ডেভেলপমেন্টে কিছু সেট না থাকলে .data/orders.jsonl ফাইলে লেখে
- * অন্তত একটা জায়গায় সেভ না হলে অর্ডার ব্যর্থ ধরা হয়, যাতে অর্ডার হারিয়ে না যায়।
+ * নতুন অর্ডারের নোটিফিকেশন (ঐচ্ছিক) — অর্ডার ডাটাবেসে সেভ হওয়ার পর পাঠানো হয়:
+ *  - TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID: টেলিগ্রামে মেসেজ
+ *  - ORDER_WEBHOOK_URL: Google Sheet (Apps Script) বা অন্য কোথাও JSON
+ * এগুলো ব্যর্থ হলেও অর্ডার বাতিল হয় না।
  */
-export async function saveOrder(order: Order): Promise<void> {
-  const webhook = process.env.ORDER_WEBHOOK_URL;
-  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
-  const tgChat = process.env.TELEGRAM_CHAT_ID;
-
-  let saved = false;
-
-  if (webhook) {
-    const res = await fetch(webhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(flatten(order)),
-    });
-    if (!res.ok) throw new Error(`Order webhook failed: ${res.status}`);
-    saved = true;
-  }
-
-  if (tgToken && tgChat) {
-    const res = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: tgChat, text: telegramText(order) }),
-    });
-    if (res.ok) saved = true;
-    else if (!saved) throw new Error(`Telegram notify failed: ${res.status}`);
-  }
-
-  if (!saved) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("No order destination configured (set ORDER_WEBHOOK_URL or TELEGRAM_* env vars)");
-    }
-    const dir = path.join(process.cwd(), ".data");
-    await mkdir(dir, { recursive: true });
-    await appendFile(path.join(dir, "orders.jsonl"), JSON.stringify(order) + "\n");
-  }
-}
-
-/** Google Sheet-এ এক সারিতে বসানোর মতো সমতল রূপ। */
-function flatten(order: Order) {
-  return {
-    id: order.id,
-    createdAt: order.createdAt,
-    name: order.customer.name,
-    phone: order.customer.phone,
-    address: order.customer.address,
-    zone: deliveryZoneLabels[order.customer.zone],
-    note: order.customer.note,
-    payment: order.payment.method === "cod" ? "Cash on delivery" : "bKash",
-    bkashSender: order.payment.bkashSender ?? "",
-    bkashTrxId: order.payment.bkashTrxId ?? "",
-    items: order.lines
-      .map((l) => `${l.name} (${l.size}${l.color ? ", " + l.color : ""}) x${l.qty}`)
-      .join("; "),
+export async function notifyNewOrder(order: OrderRow, lines: Line[]) {
+  const items = lines.map((l) => `${l.name} (${l.size}${l.color ? ", " + l.color : ""}) x${l.qty}`).join("; ");
+  const flat = {
+    id: order.code,
+    createdAt: order.createdAt.toISOString(),
+    name: order.name,
+    phone: order.phone,
+    address: order.address,
+    zone: deliveryZoneLabels[order.zone as DeliveryZone],
+    note: order.note,
+    payment: paymentMethodLabels[order.paymentMethod] ?? order.paymentMethod,
+    bkashSender: order.bkashSender ?? "",
+    bkashTrxId: order.bkashTrxId ?? "",
+    items,
     subtotal: order.subtotal,
     delivery: order.delivery,
     total: order.total,
   };
-}
 
-function telegramText(order: Order) {
-  const f = flatten(order);
-  return [
-    `🛍 নতুন অর্ডার ${f.id}`,
-    `নাম: ${f.name}`,
-    `ফোন: ${f.phone}`,
-    `ঠিকানা: ${f.address} (${f.zone})`,
-    `পণ্য: ${f.items}`,
-    `মোট: ৳${f.total} (ডেলিভারি ৳${f.delivery})`,
-    `পেমেন্ট: ${f.payment}${f.bkashTrxId ? ` — TrxID ${f.bkashTrxId}, from ${f.bkashSender}` : ""}`,
-    f.note ? `নোট: ${f.note}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const jobs: Promise<unknown>[] = [];
+  const webhook = process.env.ORDER_WEBHOOK_URL;
+  if (webhook) {
+    jobs.push(fetch(webhook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(flat) }));
+  }
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChat = process.env.TELEGRAM_CHAT_ID;
+  if (tgToken && tgChat) {
+    const text = [
+      `নতুন অর্ডার ${flat.id}`,
+      `নাম: ${flat.name}`,
+      `ফোন: ${flat.phone}`,
+      `ঠিকানা: ${flat.address} (${flat.zone})`,
+      `পণ্য: ${flat.items}`,
+      `মোট: ৳${flat.total} (ডেলিভারি ৳${flat.delivery})`,
+      `পেমেন্ট: ${flat.payment}${flat.bkashTrxId ? ` — TrxID ${flat.bkashTrxId}, from ${flat.bkashSender}` : ""}`,
+      flat.note ? `নোট: ${flat.note}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    jobs.push(
+      fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: tgChat, text }),
+      }),
+    );
+  }
+  const results = await Promise.allSettled(jobs);
+  results.forEach((r) => r.status === "rejected" && console.error("Order notification failed", r.reason));
 }

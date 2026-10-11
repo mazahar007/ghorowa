@@ -43,3 +43,6 @@ next-env.d.ts
 # local orders (development)
 /.data
 !.env.example
+
+# local image uploads (development)
+/public/uploads

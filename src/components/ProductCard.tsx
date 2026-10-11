@@ -1,57 +1,68 @@
 import Link from "next/link";
-import type { Product } from "@/data/catalog";
-import { formatPrice, toBn } from "@/lib/format";
+import type { Product } from "@/lib/types";
+import { formatPrice } from "@/lib/format";
 import { ProductImage } from "./ProductImage";
+import { QuickAdd } from "./QuickAdd";
 
-export function ProductCard({ product }: { product: Product }) {
-  const discount = product.compareAtPrice
-    ? Math.round((1 - product.price / product.compareAtPrice) * 100)
-    : 0;
+export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
+  const saving = product.compareAtPrice ? product.compareAtPrice - product.price : 0;
 
   return (
-    <article className="group flex flex-col gap-3 rounded-2xl border border-line bg-white p-3 transition-shadow hover:shadow-md">
-      <Link href={`/product/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden rounded-xl">
-        <ProductImage product={product} />
-        {discount > 0 && (
-          <span className="absolute left-2.5 top-2.5 rounded-full bg-brand-dark px-2.5 py-1 text-xs font-bold text-white">
-            {toBn(discount)}% ছাড়
-          </span>
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:-translate-y-0.5 hover:shadow-lg">
+      <Link href={`/product/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden bg-cream">
+        <ProductImage product={product} priority={priority} className="transition duration-500 group-hover:scale-105" />
+        {product.images[1] && (
+          <ProductImage product={product} index={1} className="opacity-0 transition duration-500 group-hover:opacity-100" />
         )}
-        {!product.inStock && (
-          <span className="absolute right-2.5 top-2.5 rounded-full bg-ink px-2.5 py-1 text-xs font-bold text-cream">
-            স্টক শেষ
-          </span>
-        )}
+        <span className="absolute left-2 top-2 flex flex-col items-start gap-1">
+          {saving > 0 && (
+            <span className="rounded-full bg-brand-dark px-2.5 py-1 text-xs font-bold text-white">
+              {formatPrice(saving)} ছাড়
+            </span>
+          )}
+          {!product.inStock && (
+            <span className="rounded-full bg-ink px-2.5 py-1 text-xs font-bold text-cream">স্টক শেষ</span>
+          )}
+        </span>
       </Link>
-      <div className="flex flex-1 flex-col gap-1 px-1">
-        <h3 className="text-base font-bold leading-snug">
+      <div className="flex flex-1 flex-col gap-1 p-3 sm:p-3.5">
+        <h3 className="line-clamp-2 min-h-[2.75em] text-[15px] font-semibold leading-snug">
           <Link href={`/product/${product.slug}`} className="hover:text-brand-dark">
             {product.name}
           </Link>
         </h3>
-        <p className="text-sm text-muted">সাইজ: {product.sizes.join(", ")}</p>
-        <p className="mt-auto flex items-baseline gap-2 pt-1">
+        <p className="flex flex-wrap items-baseline gap-x-2">
           <span className="text-lg font-bold text-brand-dark">{formatPrice(product.price)}</span>
           {product.compareAtPrice && (
             <s className="text-sm text-muted">{formatPrice(product.compareAtPrice)}</s>
           )}
         </p>
+        <div className="mt-auto pt-2">
+          <QuickAdd product={product} />
+        </div>
       </div>
-      <Link
-        href={`/product/${product.slug}`}
-        className="flex h-11 items-center justify-center rounded-xl bg-brand font-bold text-white hover:bg-brand-dark"
-      >
-        সাইজ বেছে কিনুন
-      </Link>
     </article>
   );
 }
 
 export function ProductGrid({ products }: { products: Product[] }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {products.map((p, i) => (
+        <ProductCard key={p.slug} product={p} priority={i < 2} />
+      ))}
+    </div>
+  );
+}
+
+/** মোবাইলে আড়াআড়ি স্ক্রল, বড় স্ক্রিনে গ্রিড। */
+export function ProductRail({ products }: { products: Product[] }) {
+  return (
+    <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:snap-none sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4 xl:grid-cols-5">
       {products.map((p) => (
-        <ProductCard key={p.slug} product={p} />
+        <div key={p.slug} className="w-[46%] shrink-0 snap-start sm:w-auto">
+          <ProductCard product={p} />
+        </div>
       ))}
     </div>
   );

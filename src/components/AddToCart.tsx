@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { Product } from "@/data/catalog";
-import { cart } from "@/lib/cart-store";
+import type { Product } from "@/lib/types";
+import { cart, cartDrawer } from "@/lib/cart-store";
 import { toBn } from "@/lib/format";
 import { CheckIcon } from "./icons";
 
@@ -26,7 +26,7 @@ function Choice({ selected, onClick, children }: { selected: boolean; onClick: (
 export function AddToCart({ product }: { product: Product }) {
   const router = useRouter();
   const [size, setSize] = useState<string | null>(product.sizes.length === 1 ? product.sizes[0] : null);
-  const [color, setColor] = useState<string | undefined>(product.colors?.[0]);
+  const [color, setColor] = useState<string | undefined>(product.colors[0]);
   const [qty, setQty] = useState(1);
   const [error, setError] = useState(false);
   const [added, setAdded] = useState(false);
@@ -36,11 +36,12 @@ export function AddToCart({ product }: { product: Product }) {
       setError(true);
       return;
     }
-    cart.add({ slug: product.slug, size, color }, qty);
+    cart.add({ slug: product.slug, size, color, name: product.name, price: product.price, image: product.images[0] }, qty);
     if (goToCheckout) {
       router.push("/checkout");
     } else {
       setAdded(true);
+      cartDrawer.open();
     }
   }
 
@@ -65,7 +66,7 @@ export function AddToCart({ product }: { product: Product }) {
         {error && <p role="alert" className="mt-2 text-sm font-semibold text-brand-dark">অনুগ্রহ করে একটা সাইজ বেছে নিন।</p>}
       </fieldset>
 
-      {product.colors && product.colors.length > 0 && (
+      {product.colors.length > 0 && (
         <fieldset>
           <legend className="mb-2 font-bold">রং</legend>
           <div className="flex flex-wrap gap-2">

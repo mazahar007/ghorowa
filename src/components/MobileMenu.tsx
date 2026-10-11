@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { categories } from "@/data/catalog";
+import type { Category } from "@/lib/types";
+import { Sheet } from "./Sheet";
 import { CloseIcon, MenuIcon } from "./icons";
 
-export function MobileMenu() {
+export function MobileMenu({ categories }: { categories: Category[] }) {
   const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
   return (
     <div className="md:hidden">
       <button
@@ -19,32 +21,17 @@ export function MobileMenu() {
         <MenuIcon />
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex">
-          <button
-            type="button"
-            aria-label="মেনু বন্ধ করুন"
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setOpen(false)}
-          />
-          <nav aria-label="ক্যাটাগরি" className="relative flex h-full w-80 max-w-[85%] flex-col gap-1 overflow-y-auto bg-paper p-5 shadow-xl">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="font-bangla text-xl font-bold">ক্যাটাগরি</span>
-              <button
-                type="button"
-                aria-label="মেনু বন্ধ করুন"
-                onClick={() => setOpen(false)}
-                className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-sand"
-              >
-                <CloseIcon />
-              </button>
-            </div>
+        <Sheet label="মেনু" side="left" onClose={close}>
+          <div className="mb-3 flex items-center justify-between">
+            <span className="font-bangla text-xl font-bold">ক্যাটাগরি</span>
+            <button type="button" aria-label="মেনু বন্ধ করুন" onClick={close} className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-sand">
+              <CloseIcon />
+            </button>
+          </div>
+          <nav aria-label="ক্যাটাগরি" className="flex flex-col gap-1">
+            <Link href="/offers" onClick={close} className="flex min-h-12 items-center rounded-xl px-3 font-bold text-brand-dark hover:bg-sand">অফার</Link>
             {categories.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/category/${c.slug}`}
-                onClick={() => setOpen(false)}
-                className="flex min-h-12 items-center justify-between rounded-xl px-3 font-medium hover:bg-sand"
-              >
+              <Link key={c.slug} href={`/category/${c.slug}`} onClick={close} className="flex min-h-12 items-center justify-between rounded-xl px-3 font-medium hover:bg-sand">
                 {c.name}
                 {c.live ? (
                   <span className="rounded-full bg-brand-dark px-2 py-0.5 text-xs font-bold text-white">এখন পাওয়া যাচ্ছে</span>
@@ -54,10 +41,11 @@ export function MobileMenu() {
               </Link>
             ))}
             <hr className="my-3 border-line" />
-            <Link href="/help" onClick={() => setOpen(false)} className="flex min-h-12 items-center rounded-xl px-3 hover:bg-sand">সাহায্য ও যোগাযোগ</Link>
-            <Link href="/size-guide" onClick={() => setOpen(false)} className="flex min-h-12 items-center rounded-xl px-3 hover:bg-sand">সাইজ গাইড</Link>
+            <Link href="/account" onClick={close} className="flex min-h-12 items-center rounded-xl px-3 hover:bg-sand">আমার অ্যাকাউন্ট ও অর্ডার</Link>
+            <Link href="/size-guide" onClick={close} className="flex min-h-12 items-center rounded-xl px-3 hover:bg-sand">সাইজ গাইড</Link>
+            <Link href="/help" onClick={close} className="flex min-h-12 items-center rounded-xl px-3 hover:bg-sand">সাহায্য ও যোগাযোগ</Link>
           </nav>
-        </div>
+        </Sheet>
       )}
     </div>
   );

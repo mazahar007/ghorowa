@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { cart, useCartDetails } from "@/lib/cart-store";
+import { cart, useCart } from "@/lib/cart-store";
 import { formatPrice, toBn } from "@/lib/format";
 import { ProductImage } from "./ProductImage";
 import { TrashIcon } from "./icons";
 
 export function CartView() {
-  const { items, subtotal, count } = useCartDetails();
+  const { items, subtotal, count } = useCart();
 
   if (items.length === 0) {
     return (
@@ -29,26 +29,22 @@ export function CartView() {
           return (
             <li key={`${item.slug}-${item.size}-${item.color ?? ""}`} className="flex gap-4 rounded-2xl border border-line bg-white p-3">
               <Link href={`/product/${item.slug}`} className="relative aspect-[4/5] w-24 shrink-0 overflow-hidden rounded-xl">
-                <ProductImage product={item.product} sizes="96px" />
+                <ProductImage product={{ name: item.name, images: item.image ? [item.image] : [] }} sizes="96px" />
               </Link>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <Link href={`/product/${item.slug}`} className="font-bold hover:text-brand-dark">{item.product.name}</Link>
+                <Link href={`/product/${item.slug}`} className="font-bold hover:text-brand-dark">{item.name}</Link>
                 <p className="text-sm text-muted">
                   সাইজ: {item.size}
                   {item.color && <> · রং: {item.color}</>}
                 </p>
-                <p className="font-bold text-brand-dark">{formatPrice(item.product.price)}</p>
+                <p className="font-bold text-brand-dark">{formatPrice(item.price)}</p>
                 <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center rounded-xl border-[1.5px] border-line-strong">
                     <button type="button" aria-label="কমান" onClick={() => cart.setQty(key, item.qty - 1)} className="h-11 w-11 text-xl">−</button>
                     <span className="w-8 text-center font-bold">{toBn(item.qty)}</span>
                     <button type="button" aria-label="বাড়ান" onClick={() => cart.setQty(key, item.qty + 1)} className="h-11 w-11 text-xl">+</button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => cart.remove(key)}
-                    className="flex h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-sand hover:text-ink"
-                  >
+                  <button type="button" onClick={() => cart.remove(key)} className="flex h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-sand hover:text-ink">
                     <TrashIcon size={18} /> সরান
                   </button>
                 </div>
