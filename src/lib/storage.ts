@@ -13,6 +13,14 @@ const TYPES: Record<string, string> = {
 };
 
 /**
+ * নতুন ধরনের secret key (sb_secret_…) শুধু `apikey` হেডারে যায়;
+ * পুরনো service_role JWT দুই হেডারেই দেওয়া হয়।
+ */
+export function supabaseAuthHeaders(key: string): Record<string, string> {
+  return key.startsWith("sb_") ? { apikey: key } : { apikey: key, Authorization: `Bearer ${key}` };
+}
+
+/**
  * পণ্যের ছবি আপলোড করে পাবলিক URL ফেরত দেয়।
  * SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY থাকলে Supabase Storage-এ,
  * না থাকলে (শুধু লোকাল ডেভেলপমেন্টে) public/uploads ফোল্ডারে রাখে।
@@ -32,8 +40,7 @@ export async function uploadProductImage(file: File, slug: string): Promise<stri
     const res = await fetch(`${url}/storage/v1/object/${BUCKET}/${name}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${key}`,
-        apikey: key,
+        ...supabaseAuthHeaders(key),
         "Content-Type": file.type,
         "Cache-Control": "31536000",
       },

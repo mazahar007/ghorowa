@@ -8,7 +8,8 @@ const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const out = process.argv[2];
 const bucket = "products";
 if (!base || !key || !out) throw new Error("SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and an output dir are required");
-const headers = { Authorization: `Bearer ${key}`, apikey: key };
+// new-style secret keys (sb_secret_…) go in `apikey` only; legacy service_role JWTs in both headers
+const headers = key.startsWith("sb_") ? { apikey: key } : { Authorization: `Bearer ${key}`, apikey: key };
 
 async function list(prefix) {
   const names = [];

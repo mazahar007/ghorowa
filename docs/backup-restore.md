@@ -15,7 +15,7 @@ GitHub-এ `ghorowa` repo → **Settings → Secrets and variables → Actions �
 | --- | --- |
 | `DATABASE_BACKUP_URL` | Supabase → **Connect** → **Session pooler** স্ট্রিং (পোর্ট **5432**, পাসওয়ার্ড বসিয়ে)। Vercel-এর `DATABASE_URL` (পোর্ট 6543) এখানে চলবে না। |
 | `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → `service_role` কী |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → **Secret keys** (`sb_secret_…`), অথবা Legacy ট্যাবের `service_role` |
 | `BACKUP_PASSPHRASE` | নিজের বানানো একটা লম্বা পাসওয়ার্ড — **কোথাও লিখে রাখুন**, এটা হারালে ব্যাকআপ খোলা যাবে না |
 
 তারপর repo → **Actions → Daily backup → Run workflow** চাপুন। কয়েক মিনিটে সবুজ টিক এলে সেটআপ ঠিক আছে।

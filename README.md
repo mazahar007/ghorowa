@@ -26,7 +26,7 @@
 1. https://supabase.com এ অ্যাকাউন্ট খুলে **New project** বানান (Region: Singapore বা Mumbai)।
 2. বাঁ পাশে **SQL Editor → New query**-তে [`supabase/setup.sql`](supabase/setup.sql) ফাইলের পুরোটা পেস্ট করে **Run** চাপুন। টেবিল, নমুনা পণ্য আর ছবির স্টোরেজ তৈরি হয়ে যাবে।
 3. **Project Settings → Database → Connection string → Transaction pooler** থেকে URL কপি করুন (পাসওয়ার্ড বসিয়ে) — এটা `DATABASE_URL`।
-4. **Project Settings → API** থেকে Project URL (`SUPABASE_URL`) আর `service_role` কী (`SUPABASE_SERVICE_ROLE_KEY`) কপি করুন।
+4. **Project Settings → Data API** থেকে Project URL (`SUPABASE_URL`), আর **Project Settings → API Keys → Secret keys** থেকে `sb_secret_…` কী (`SUPABASE_SERVICE_ROLE_KEY`) কপি করুন।
 
 ### ২. Vercel
 1. https://vercel.com → **Add New → Project** → `ghorowa` repo।
