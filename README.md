@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ghorowa (ঘরোয়া) — ই-কমার্স ওয়েবসাইট
 
-## Getting Started
+বাচ্চাদের পোশাক দিয়ে শুরু, পরে পুরো পরিবারের সবকিছু। Next.js দিয়ে বানানো, বাংলায়।
 
-First, run the development server:
+## যা যা আছে
+
+- হোম পেজ: কভার, বয়স অনুযায়ী কেনাকাটা, কিডস কালেকশন (মেয়ে/ছেলে/বেবি ফিল্টার), সব ক্যাটাগরি
+- ক্যাটাগরি পেজ: চালু ক্যাটাগরিতে পণ্য ও ফিল্টার; বাকিগুলোতে "শীঘ্রই আসছে"
+- প্রোডাক্ট পেজ: সাইজ, রং, পরিমাণ, কার্টে যোগ / এখনই কিনুন, সাইজ গাইড লিংক
+- কার্ট (ব্রাউজারে সেভ থাকে), চেকআউট (ক্যাশ অন ডেলিভারি ও বিকাশ), অর্ডার সম্পন্ন পেজ
+- সার্চ, সাইজ গাইড, সাহায্য ও যোগাযোগ পেজ
+- মোবাইলে ঠিকমতো দেখায়
+
+## কম্পিউটারে চালানো
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+তারপর ব্রাউজারে http://localhost:3000 খুলুন। লোকালি অর্ডার দিলে `.data/orders.jsonl` ফাইলে জমা হয়।
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## কোথায় কী বদলাবেন
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| কী বদলাবেন | ফাইল |
+| --- | --- |
+| ফোন, বিকাশ নম্বর, ঠিকানা, ডেলিভারি চার্জ | `src/config/site.ts` |
+| পণ্য, দাম, সাইজ, ক্যাটাগরি | `src/data/catalog.ts` |
+| পণ্যের ছবি | `public/products/` ফোল্ডারে রাখুন, তারপর `catalog.ts`-এ `images: ["/products/frock-1.jpg"]` |
+| সাইজ চার্ট | `src/app/size-guide/page.tsx` |
+| রিটার্ন/ডেলিভারি নিয়ম | `src/app/help/page.tsx` |
+| রং ও ফন্ট | `src/app/globals.css`, `src/app/layout.tsx` |
 
-## Learn More
+> ⚠ এখনকার সব পণ্য, দাম ও সাইজ চার্ট **নমুনা**। লাইভ করার আগে আসল তথ্য দিন।
+> `[ ]` চিহ্নের জায়গাগুলো আপনার তথ্য দিয়ে বদলাতে হবে।
 
-To learn more about Next.js, take a look at the following resources:
+**নতুন ক্যাটাগরি চালু করতে:** `catalog.ts`-এ সেই ক্যাটাগরির `live: true` করুন আর সেই `category` দিয়ে পণ্য যোগ করুন।
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## অর্ডার কোথায় যায়
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+অর্ডার সার্ভারে যাচাই হয় (দাম সবসময় `catalog.ts` থেকে নেওয়া হয়)। তারপর:
 
-## Deploy on Vercel
+1. **Google Sheet** — `ORDER_WEBHOOK_URL` সেট করলে প্রতিটি অর্ডার শিটে একটা সারি হিসেবে বসে। সেটআপ: [docs/orders-google-sheet.md](docs/orders-google-sheet.md)
+2. **Telegram** — `TELEGRAM_BOT_TOKEN` ও `TELEGRAM_CHAT_ID` দিলে নতুন অর্ডারের মেসেজ মোবাইলে আসে।
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+লাইভ সাইটে এর অন্তত একটা সেট না থাকলে অর্ডার নেওয়া বন্ধ থাকে, যাতে কোনো অর্ডার হারিয়ে না যায়।
+ভেরিয়েবলের তালিকা: `.env.example`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## অনলাইনে লাইভ করা (Vercel, ফ্রি দিয়ে শুরু)
+
+1. এই কোড GitHub-এ রাখুন।
+2. https://vercel.com এ GitHub দিয়ে লগইন করে **Add New → Project** থেকে repo-টা বেছে নিন।
+3. **Environment Variables**-এ `NEXT_PUBLIC_SITE_URL`, `ORDER_WEBHOOK_URL` (এবং চাইলে Telegram) দিন, তারপর **Deploy**।
+4. ডোমেইন কিনে Vercel-এর **Settings → Domains**-এ যোগ করুন, ডোমেইন প্যানেলে Vercel যে DNS রেকর্ড বলে সেটা বসান।
+
+এরপর GitHub-এ কোড বদলালেই সাইট নিজে নিজে আপডেট হবে।
