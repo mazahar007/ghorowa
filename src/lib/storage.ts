@@ -12,6 +12,17 @@ const TYPES: Record<string, string> = {
   "image/avif": "avif",
 };
 
+/** শুধু https://xxxx.supabase.co অংশটা নেয় — কেউ …/rest/v1/ সহ লিংক দিলেও চলবে। */
+export function supabaseOrigin(): string | null {
+  const raw = process.env.SUPABASE_URL;
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * নতুন ধরনের secret key (sb_secret_…) শুধু `apikey` হেডারে যায়;
  * পুরনো service_role JWT দুই হেডারেই দেওয়া হয়।
@@ -34,7 +45,7 @@ export async function uploadProductImage(file: File, slug: string): Promise<stri
   const name = `${safeSlug}-${Date.now().toString(36)}${randomBytes(3).toString("hex")}.${ext}`;
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  const url = process.env.SUPABASE_URL;
+  const url = supabaseOrigin();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (url && key) {
     const res = await fetch(`${url}/storage/v1/object/${BUCKET}/${name}`, {

@@ -3,7 +3,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const base = process.env.SUPABASE_URL;
+// keep only https://xxxx.supabase.co even if a longer URL (…/rest/v1/) was pasted
+const base = process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).origin : "";
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const out = process.argv[2];
 const bucket = "products";
