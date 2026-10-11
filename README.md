@@ -43,6 +43,9 @@
 | টেলিগ্রামে নতুন অর্ডারের মেসেজ | @BotFather থেকে বট বানিয়ে টোকেন, নিজের chat id | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 | Google Sheet-এ অর্ডারের কপি | [docs/orders-google-sheet.md](docs/orders-google-sheet.md) | `ORDER_WEBHOOK_URL` |
 
+### ৪. প্রতিদিনের ব্যাকআপ
+প্রতিদিন রাতে GitHub নিজে থেকে ডাটাবেস ও সব ছবির কপি রাখে (৩০ দিন)। সেটআপ ও রিস্টোর: [docs/backup-restore.md](docs/backup-restore.md)
+
 ভেরিয়েবল না দিলে সেই ফিচারটা আপনা-আপনি লুকানো থাকে (যেমন বিকাশ অনলাইন অপশন চেকআউটে দেখাবে না)।
 
 ## কোথায় কী বদলাবেন
