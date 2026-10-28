@@ -55,12 +55,20 @@ export function ProductGrid({ products }: { products: Product[] }) {
   );
 }
 
-/** মোবাইলে আড়াআড়ি স্ক্রল, বড় স্ক্রিনে গ্রিড। */
+/** Desktop shows exactly one row: 3 / 4 / 5 cards as the grid widens. */
+function railVisibility(i: number) {
+  if (i < 3) return "";
+  if (i === 3) return "sm:hidden lg:block";
+  if (i === 4) return "sm:hidden xl:block";
+  return "sm:hidden";
+}
+
+/** মোবাইলে আড়াআড়ি স্ক্রল; বড় স্ক্রিনে এক সারির গ্রিড (বাকি পণ্য "সব দেখুন"-এ)। */
 export function ProductRail({ products }: { products: Product[] }) {
   return (
     <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:snap-none sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4 xl:grid-cols-5">
-      {products.map((p) => (
-        <div key={p.slug} className="w-[46%] shrink-0 snap-start sm:w-auto">
+      {products.map((p, i) => (
+        <div key={p.slug} className={`w-[46%] shrink-0 snap-start sm:w-auto ${railVisibility(i)}`}>
           <ProductCard product={p} />
         </div>
       ))}
