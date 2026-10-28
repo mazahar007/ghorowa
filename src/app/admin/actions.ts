@@ -5,7 +5,17 @@ import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, schema } from "@/db";
 import { requireAdmin } from "@/lib/admin";
-import { checkAdminCredentials, endAdminSession, startAdminSession } from "@/lib/auth";
+import { headers } from "next/headers";
+import { endAdminSession, startAdminSession } from "@/lib/auth";
+import {
+  MIN_ADMIN_PASSWORD,
+  checkAdminPassword,
+  createResetToken,
+  findResetToken,
+  setAdminPassword,
+  verifyAdminLogin,
+} from "@/lib/admin-accounts";
+import { resetChannelConfigured, sendAdminResetLink } from "@/lib/notify-admin";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { ageGroups } from "@/lib/labels";
 import { uploadProductImage } from "@/lib/storage";
@@ -27,9 +37,64 @@ export async function loginAdmin(_: FormState, fd: FormData): Promise<FormState>
   const password = String(fd.get("password") ?? "");
   // slow down brute-force attempts
   await new Promise((r) => setTimeout(r, 400));
-  if (!checkAdminCredentials(email, password)) return { error: "ইমেইল বা পাসওয়ার্ড ভুল।" };
-  await startAdminSession(email);
+  const admin = await verifyAdminLogin(email, password);
+  if (!admin) return { error: "ইমেইল বা পাসওয়ার্ড ভুল।" };
+  await startAdminSession(admin);
   redirect("/admin");
+}
+
+async function siteOrigin() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return new URL(process.env.NEXT_PUBLIC_SITE_URL).origin;
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
+export async function requestAdminReset(_: FormState, fd: FormData): Promise<FormState> {
+  const email = text(fd, "email", 200);
+  if (!email.includes("@")) return { error: "সঠিক ইমেইল লিখুন।" };
+  if (!resetChannelConfigured()) {
+    return {
+      error:
+        "রিসেট লিংক পাঠানোর ব্যবস্থা এখনো চালু হয়নি। Vercel → Settings → Environment Variables-এ ADMIN_PASSWORD বদলে Redeploy করুন — নতুন পাসওয়ার্ড দিয়ে লগইন হবে।",
+    };
+  }
+  await new Promise((r) => setTimeout(r, 400));
+  const reset = await createResetToken(email);
+  if (reset) {
+    const link = `${await siteOrigin()}/admin/reset?token=${encodeURIComponent(reset.token)}`;
+    await sendAdminResetLink(reset.email, link);
+  }
+  // same answer whether or not the email exists, so it can't be used to find admin emails
+  return { ok: "এই ইমেইলে অ্যাডমিন অ্যাকাউন্ট থাকলে রিসেট লিংক পাঠানো হয়েছে। ইমেইল (বা টেলিগ্রাম) দেখুন — লিংক ৩০ মিনিট কাজ করবে।" };
+}
+
+export async function resetAdminPassword(_: FormState, fd: FormData): Promise<FormState> {
+  const token = text(fd, "token", 100);
+  const password = String(fd.get("password") ?? "");
+  const confirm = String(fd.get("confirm") ?? "");
+  const row = await findResetToken(token);
+  if (!row) return { error: "লিংকটা আর কাজ করছে না (মেয়াদ শেষ বা আগেই ব্যবহার হয়েছে)। আবার রিসেট চেয়ে নিন।" };
+  if (password.length < MIN_ADMIN_PASSWORD) return { error: `পাসওয়ার্ড অন্তত ${MIN_ADMIN_PASSWORD} অক্ষরের হতে হবে।` };
+  if (password !== confirm) return { error: "দুই ঘরের পাসওয়ার্ড মেলেনি।" };
+  await setAdminPassword(row.adminId, password);
+  await endAdminSession();
+  redirect("/admin/login?reset=1");
+}
+
+export async function changeAdminPassword(_: FormState, fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const current = String(fd.get("current") ?? "");
+  const password = String(fd.get("password") ?? "");
+  const confirm = String(fd.get("confirm") ?? "");
+  if (!(await checkAdminPassword(admin.id, current))) return { error: "বর্তমান পাসওয়ার্ড ভুল।" };
+  if (password.length < MIN_ADMIN_PASSWORD) return { error: `নতুন পাসওয়ার্ড অন্তত ${MIN_ADMIN_PASSWORD} অক্ষরের হতে হবে।` };
+  if (password !== confirm) return { error: "দুই ঘরের নতুন পাসওয়ার্ড মেলেনি।" };
+  const session = await setAdminPassword(admin.id, password);
+  // keep this browser signed in; every other device is logged out
+  await startAdminSession(session);
+  return { ok: "পাসওয়ার্ড বদলানো হয়েছে। অন্য সব ডিভাইস থেকে লগআউট হয়ে গেছে।" };
 }
 
 export async function logoutAdmin() {

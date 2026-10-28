@@ -120,3 +120,30 @@ export type ProductRow = typeof products.$inferSelect;
 export type OrderRow = typeof orders.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
 export type CustomerRow = typeof customers.$inferSelect;
+
+export const admins = pgTable("admins", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  /** পাসওয়ার্ড বদলালে আগের সব লগইন বাতিল হয় */
+  passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const adminResetTokens = pgTable(
+  "admin_reset_tokens",
+  {
+    id: serial("id").primaryKey(),
+    adminId: integer("admin_id")
+      .notNull()
+      .references(() => admins.id, { onDelete: "cascade" }),
+    /** শুধু হ্যাশ রাখা হয়; আসল লিংক শুধু ইমেইলে যায় */
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("admin_reset_tokens_admin_idx").on(t.adminId)],
+);
+
+export type AdminRow = typeof admins.$inferSelect;

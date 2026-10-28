@@ -1,5 +1,4 @@
 import "server-only";
-import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 
@@ -44,27 +43,16 @@ async function setCookie(name: string, value: string, maxAge: number) {
 
 // ── Admin ────────────────────────────────────────────────
 
-function safeEqual(a: string, b: string) {
-  const ab = Buffer.from(a);
-  const bb = Buffer.from(b);
-  return ab.length === bb.length && timingSafeEqual(ab, bb);
+export async function startAdminSession(admin: { id: number; email: string; pwv: number }) {
+  await setCookie(ADMIN_COOKIE, await sign({ role: "admin", aid: admin.id, email: admin.email, pwv: admin.pwv }, ADMIN_TTL), ADMIN_TTL);
 }
 
-/** অ্যাডমিনের ইমেইল/পাসওয়ার্ড এনভায়রনমেন্ট ভেরিয়েবল থেকে মিলিয়ে দেখে। */
-export function checkAdminCredentials(email: string, password: string) {
-  const envEmail = process.env.ADMIN_EMAIL;
-  const envPassword = process.env.ADMIN_PASSWORD;
-  if (!envEmail || !envPassword) return false;
-  return safeEqual(email.trim().toLowerCase(), envEmail.trim().toLowerCase()) && safeEqual(password, envPassword);
-}
-
-export async function startAdminSession(email: string) {
-  await setCookie(ADMIN_COOKIE, await sign({ role: "admin", email }, ADMIN_TTL), ADMIN_TTL);
-}
-
-export async function getAdmin(): Promise<{ email: string } | null> {
-  const payload = await verify((await cookies()).get(ADMIN_COOKIE)?.value);
-  return payload?.role === "admin" && typeof payload.email === "string" ? { email: payload.email } : null;
+/** The signed-in admin from the cookie (not yet checked against the database). */
+export async function getAdminClaims(): Promise<{ id: number; email: string; pwv: number } | null> {
+  const p = await verify((await cookies()).get(ADMIN_COOKIE)?.value);
+  return p?.role === "admin" && typeof p.aid === "number" && typeof p.email === "string" && typeof p.pwv === "number"
+    ? { id: p.aid, email: p.email, pwv: p.pwv }
+    : null;
 }
 
 export async function endAdminSession() {

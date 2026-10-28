@@ -1,13 +1,18 @@
-import { LoginForm } from "./LoginForm";
+import Link from "next/link";
+import { Suspense } from "react";
+import { AuthCard } from "@/components/admin/AuthCard";
+import { LoginForm, ResetNotice } from "./LoginForm";
 
 export default function AdminLoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-sm">
-        <p className="font-brand text-xl font-medium tracking-[0.2em]">GHOROWA</p>
-        <h1 className="mb-6 mt-1 font-bangla text-2xl font-bold">অ্যাডমিন লগইন</h1>
-        <LoginForm />
-      </div>
-    </div>
+    <AuthCard title="অ্যাডমিন লগইন">
+      <Suspense>
+        <ResetNotice />
+      </Suspense>
+      <LoginForm />
+      <Link href="/admin/forgot" className="mt-4 block text-center text-sm font-semibold text-brand-dark underline">
+        পাসওয়ার্ড ভুলে গেছেন?
+      </Link>
+    </AuthCard>
   );
 }

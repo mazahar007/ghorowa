@@ -8,6 +8,7 @@ const nav = [
   { href: "/admin/orders", label: "অর্ডার" },
   { href: "/admin/products", label: "পণ্য" },
   { href: "/admin/categories", label: "ক্যাটাগরি" },
+  { href: "/admin/settings", label: "সেটিংস" },
 ];
 
 async function Guard({ children }: { children: React.ReactNode }) {
