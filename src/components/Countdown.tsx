@@ -31,7 +31,7 @@ export function Countdown({ endsAt }: { endsAt: string }) {
     <div className="flex items-center gap-1.5" aria-label="অফার শেষ হতে বাকি" role="timer">
       {parts.map((p, i) => (
         <span key={p.l} className="flex items-center gap-1.5">
-          <span className="flex min-w-12 flex-col items-center rounded-lg bg-white px-2 py-1 text-ink">
+          <span className="flex min-w-12 flex-col items-center rounded-lg bg-white px-2 py-1 text-ink shadow-sm">
             <span className="text-lg font-bold leading-tight tabular-nums">{left === null ? "--" : toBn(String(p.v).padStart(2, "0"))}</span>
             <span className="text-[10px] text-muted">{p.l}</span>
           </span>

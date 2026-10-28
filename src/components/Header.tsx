@@ -30,7 +30,7 @@ export async function Header() {
   const categories = await getCategories();
   return (
     <>
-      <div className="bg-ink px-4 py-2 text-center text-[13px] text-cream sm:text-sm">
+      <div className="bg-cocoa px-4 py-2 text-center text-[13px] text-[#f3e9dd] sm:text-sm">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-1 sm:justify-between">
           <span>সারা বাংলাদেশে হোম ডেলিভারি · ক্যাশ অন ডেলিভারি</span>
           <span className="hidden gap-5 sm:flex">

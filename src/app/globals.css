@@ -1,16 +1,21 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-brand: #c94c20;
-  --color-brand-dark: #a33c16;
-  --color-ink: #2b1e18;
-  --color-cream: #fbf0dc;
-  --color-sand: #f4f0e8;
-  --color-paper: #fffdf8;
-  --color-line: #eadfcb;
-  --color-line-strong: #d9c9ac;
-  --color-muted: #6b5a4e;
-  --color-soft: #5a4a3f;
+  /* Soft, warm palette: low-glare background, clear text (all body text ≥ 4.5:1) */
+  --color-brand: #b5502a;
+  --color-brand-dark: #9a4222;
+  --color-brand-soft: #f6e4d8;
+  --color-ink: #2a211c;
+  --color-cream: #f5ecdf;
+  --color-sand: #f1ebe3;
+  --color-paper: #faf7f2;
+  --color-line: #e9e0d3;
+  --color-line-strong: #d8cbb8;
+  --color-muted: #6e625a;
+  --color-soft: #54473f;
+  --color-cocoa: #2b201b;
+  --color-cocoa-soft: #3a2c25;
+  --color-sage: #e7eee8;
 
   --font-sans: var(--font-dm-sans), var(--font-hind), sans-serif;
   --font-bangla: var(--font-hind), var(--font-dm-sans), sans-serif;
@@ -20,6 +25,20 @@
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Scroll-reveal: elements fade up once they enter the viewport (see Reveal.tsx) */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
 }
 
 :focus-visible {
@@ -36,6 +55,10 @@ body {
 @keyframes slide-in-left {
   from { transform: translateX(-100%); }
 }
+@keyframes float {
+  50% { transform: translateY(-10px); }
+}
 @media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1; transform: none; }
   *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
 }

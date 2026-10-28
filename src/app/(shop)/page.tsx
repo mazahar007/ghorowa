@@ -2,7 +2,10 @@ import Link from "next/link";
 import { getActiveProducts, getCategories } from "@/lib/catalog";
 import { ageGroups } from "@/lib/labels";
 import { flashSaleEndsAt, heroSlides } from "@/config/home";
-import { HeroSlider } from "@/components/HeroSlider";
+import { Hero } from "@/components/Hero";
+import { ScrollStory, type StoryStep } from "@/components/ScrollStory";
+import { PremiumCollection } from "@/components/PremiumCollection";
+import { Reveal } from "@/components/Reveal";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Countdown } from "@/components/Countdown";
 import { ProductRail } from "@/components/ProductCard";
@@ -16,13 +19,21 @@ const trust = [
   { icon: ShirtIcon, title: "আরামদায়ক কাপড়", text: "বাচ্চার ত্বকের কথা ভেবে বাছাই" },
 ];
 
-const ageFills = ["bg-cream", "bg-[#F6E2CF]", "bg-[#F1D6C2]", "bg-[#ECCBB6]"];
+const ageFills = ["bg-cream", "bg-brand-soft", "bg-sage", "bg-[#efe6f1]"];
+
+const storySteps: StoryStep[] = [
+  { eyebrow: "কাপড়", title: "নরম, নিঃশ্বাস নেওয়া কাপড়", text: "বাচ্চার ত্বকে আরাম দেয়, গরমেও স্বস্তি।" },
+  { eyebrow: "মাপ", title: "বয়স অনুযায়ী ঠিক মাপ", text: "সাইজ গাইড দেখে নিশ্চিন্তে বেছে নিন, না মিললে এক্সচেঞ্জ।" },
+  { eyebrow: "ডেলিভারি", title: "দরজায় পৌঁছে যায়", text: "সারা দেশে হোম ডেলিভারি, পণ্য হাতে পেয়ে টাকা দিন।" },
+];
 
 export default async function Home() {
   const [products, categories] = await Promise.all([getActiveProducts(), getCategories()]);
   const flash = products.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price && p.inStock);
   const latest = products.slice(0, 10);
   const featured = products.filter((p) => p.featured).slice(0, 10);
+  const spotlight = featured[0] ?? products[0];
+  const story = featured[1] ?? products[1] ?? spotlight;
   const byGender = (g: string) => products.filter((p) => p.gender === g || (p.gender === "unisex" && g !== "baby")).slice(0, 10);
   const genderSections = [
     { title: "মেয়েদের পোশাক", eyebrow: "FOR GIRLS", gender: "girls" },
@@ -32,7 +43,33 @@ export default async function Home() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-14 px-4 pt-5 sm:gap-16 sm:px-6">
-      <HeroSlider slides={heroSlides} />
+      <Hero slide={heroSlides[0]} product={spotlight} />
+
+      {heroSlides.length > 1 && (
+        <section aria-label="অফার" className="grid gap-4 md:grid-cols-2">
+          {heroSlides.slice(1, 3).map((s, i) => (
+            <Reveal key={s.href} delay={i * 120}>
+              <Link
+                href={s.href}
+                className={`group flex h-full flex-col justify-between gap-6 rounded-[28px] p-7 transition hover:-translate-y-0.5 sm:p-9 ${
+                  s.theme === "ink" ? "bg-cocoa text-[#f3e9dd]" : "bg-brand-soft text-ink"
+                }`}
+              >
+                <span>
+                  <span className={`text-sm font-semibold ${s.theme === "ink" ? "text-[#e8a27f]" : "text-brand-dark"}`}>{s.eyebrow}</span>
+                  <span className="mt-2 block font-bangla text-2xl font-bold leading-snug sm:text-3xl">
+                    {s.title} <span className={s.theme === "ink" ? "text-[#e8a27f]" : "text-brand-dark"}>{s.highlight}</span>
+                  </span>
+                  <span className={`mt-2 block ${s.theme === "ink" ? "text-[#c9b8a6]" : "text-soft"}`}>{s.subtitle}</span>
+                </span>
+                <span className="inline-flex items-center gap-2 font-bold">
+                  {s.cta} <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span>
+                </span>
+              </Link>
+            </Reveal>
+          ))}
+        </section>
+      )}
 
       <section aria-labelledby="cat-title">
         <h2 id="cat-title" className="sr-only">ক্যাটাগরি</h2>
@@ -54,8 +91,8 @@ export default async function Home() {
       </section>
 
       {flash.length > 0 && (
-        <section aria-labelledby="flash-title" className="rounded-[28px] bg-brand p-4 sm:p-7">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-4 text-white">
+        <section aria-labelledby="flash-title" className="rounded-[28px] bg-brand-soft p-4 sm:p-7">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-4 text-brand-dark">
             <h2 id="flash-title" className="flex items-center gap-2 font-bangla text-2xl font-bold sm:text-3xl">
               <BoltIcon size={28} /> ফ্ল্যাশ সেল
             </h2>
@@ -73,6 +110,8 @@ export default async function Home() {
         <ProductRail products={latest} />
       </section>
 
+      <PremiumCollection products={latest.slice(0, 5)} />
+
       <section aria-label="বয়স অনুযায়ী কিনুন">
         <SectionHeader title="বয়স অনুযায়ী কিনুন" eyebrow="SHOP BY AGE" />
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -84,6 +123,8 @@ export default async function Home() {
           ))}
         </div>
       </section>
+
+      {story && <ScrollStory product={story} steps={storySteps} />}
 
       {featured.length > 0 && (
         <section aria-label="বেস্ট সেলার">

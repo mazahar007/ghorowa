@@ -6,7 +6,7 @@ const payments = ["ক্যাশ অন ডেলিভারি", "bKash", "N
 
 export function Footer() {
   return (
-    <footer className="mt-20 bg-ink text-[#E9DCC6]">
+    <footer className="mt-20 bg-cocoa text-[#E9DCC6]">
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.3fr]">
         <div className="flex flex-col gap-4">
           <Logo tone="light" />
