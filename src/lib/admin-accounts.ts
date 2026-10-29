@@ -35,7 +35,18 @@ const ADMIN_TABLES_SQL = [
 let tablesReady: Promise<void> | null = null;
 export function ensureAdminTables() {
   tablesReady ??= (async () => {
-    for (const statement of ADMIN_TABLES_SQL) await db.execute(sql.raw(statement));
+    // Usually the tables already exist: check the catalog (takes no table locks) and stop.
+    // Running ALTER TABLE on every cold start queued behind other locks and hung logins.
+    const [{ ready }] = (await db.execute(
+      sql`select to_regclass('public.admins') is not null and to_regclass('public.admin_reset_tokens') is not null as ready`,
+    )) as unknown as { ready: boolean }[];
+    if (ready) return;
+    await db.transaction(async (tx) => {
+      // fail fast instead of hanging if something else holds a lock
+      await tx.execute(sql`set local lock_timeout = '5s'`);
+      await tx.execute(sql`set local statement_timeout = '15s'`);
+      for (const statement of ADMIN_TABLES_SQL) await tx.execute(sql.raw(statement));
+    });
   })().catch((err) => {
     tablesReady = null;
     throw err;

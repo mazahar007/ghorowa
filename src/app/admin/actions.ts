@@ -32,12 +32,26 @@ const list = (value: string) =>
 
 // ── Auth ─────────────────────────────────────────────────
 
+/** Rejects if the promise takes too long, so a stuck database shows a message instead of a 502. */
+function withTimeout<T>(promise: Promise<T>, ms: number) {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms)),
+  ]);
+}
+
 export async function loginAdmin(_: FormState, fd: FormData): Promise<FormState> {
   const email = text(fd, "email", 200);
   const password = String(fd.get("password") ?? "");
   // slow down brute-force attempts
   await new Promise((r) => setTimeout(r, 400));
-  const admin = await verifyAdminLogin(email, password);
+  let admin;
+  try {
+    admin = await withTimeout(verifyAdminLogin(email, password), 15_000);
+  } catch (err) {
+    console.error("admin login failed", err);
+    return { error: "ডাটাবেসের সাথে যোগাযোগ হচ্ছে না। একটু পরে আবার চেষ্টা করুন; বারবার হলে README-র \"অ্যাডমিন লগইন আটকে গেলে\" অংশ দেখুন।" };
+  }
   if (!admin) return { error: "ইমেইল বা পাসওয়ার্ড ভুল।" };
   await startAdminSession(admin);
   redirect("/admin");

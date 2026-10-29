@@ -6,6 +6,7 @@ import { Logo } from "./Logo";
 import { CartButton } from "./CartButton";
 import { MobileMenu } from "./MobileMenu";
 import { AccountLink } from "./AccountLink";
+import { CategoryNav } from "./CategoryNav";
 import { PhoneIcon, SearchIcon, UserIcon } from "./icons";
 
 function SearchBox({ className = "" }: { className?: string }) {
@@ -68,27 +69,7 @@ export async function Header() {
         <div className="px-4 pb-3 md:hidden">
           <SearchBox />
         </div>
-        <nav aria-label="ক্যাটাগরি" className="border-t border-line">
-          <ul className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-3 py-2 [scrollbar-width:none] sm:px-5">
-            <li>
-              <Link href="/offers" className="flex h-9 items-center whitespace-nowrap rounded-full px-3.5 text-sm font-bold text-brand-dark hover:bg-cream">
-                অফার
-              </Link>
-            </li>
-            {categories.map((c) => (
-              <li key={c.slug}>
-                <Link
-                  href={`/category/${c.slug}`}
-                  className={`flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-sm font-semibold ${
-                    c.live ? "bg-brand text-white hover:bg-brand-dark" : "text-soft hover:bg-sand hover:text-ink"
-                  }`}
-                >
-                  {c.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <CategoryNav categories={categories.map(({ slug, name, live }) => ({ slug, name, live }))} />
       </header>
     </>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { EyeIcon, EyeOffIcon } from "./icons";
 
 type ActionState = { error?: string; ok?: string } | undefined;
 
@@ -27,10 +28,27 @@ export function Field({
   hint,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; name: string }) {
+  const [shown, setShown] = useState(false);
+  const isPassword = props.type === "password";
   return (
     <label className="flex flex-col gap-1.5">
       <span className="font-semibold">{label}</span>
-      <input {...props} className={`${inputClass} h-12 py-0`} />
+      {isPassword ? (
+        <span className="relative">
+          <input {...props} type={shown ? "text" : "password"} className={`${inputClass} h-12 py-0 pr-14`} />
+          <button
+            type="button"
+            aria-label={shown ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+            aria-pressed={shown}
+            onClick={() => setShown((v) => !v)}
+            className="absolute right-1 top-1 flex h-10 w-12 items-center justify-center rounded-lg text-muted hover:bg-sand hover:text-ink"
+          >
+            {shown ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
+          </button>
+        </span>
+      ) : (
+        <input {...props} className={`${inputClass} h-12 py-0`} />
+      )}
       {hint && <span className="text-xs text-muted">{hint}</span>}
     </label>
   );
