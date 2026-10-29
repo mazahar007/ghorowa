@@ -38,6 +38,9 @@ const shapes: Record<Body, Shape> = {
 
 const GROUND = 440;
 
+/** Goes through Next's image optimiser (resized, cached on the CDN) — the raw upload loads noticeably slower. */
+const optimized = (src: string) => `/_next/image?url=${encodeURIComponent(src)}&w=640&q=75`;
+
 export function Mannequin({ body, side, garment }: { body: Body; side: Side; garment?: string }) {
   const s = shapes[body];
   const hipY = GROUND - s.leg;
@@ -131,7 +134,7 @@ export function Mannequin({ body, side, garment }: { body: Body; side: Side; gar
 
       {garment && (
         <image
-          href={garment}
+          href={optimized(garment)}
           x={gx}
           y={gy}
           width={gw}
