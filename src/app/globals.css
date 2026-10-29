@@ -55,6 +55,9 @@ body {
 @keyframes slide-in-left {
   from { transform: translateX(-100%); }
 }
+@keyframes turn {
+  from { transform: perspective(900px) rotateY(75deg); opacity: 0.3; }
+}
 @keyframes float {
   50% { transform: translateY(-10px); }
 }

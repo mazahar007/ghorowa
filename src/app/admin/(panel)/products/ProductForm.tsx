@@ -96,6 +96,9 @@ export function ProductForm({ categories, product }: { categories: { id: number;
 
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-2 font-semibold">ছবি</legend>
+          <p className="-mt-1 text-sm text-muted">
+            ১ম ছবি = সামনের দিক, ২য় ছবি = পেছনের দিক। সাদা বা স্বচ্ছ (PNG) ব্যাকগ্রাউন্ডে শুধু পোশাকের ছবি দিলে &quot;পরলে কেমন দেখায়&quot; ম্যানিকিনে সবচেয়ে সুন্দর বসে।
+          </p>
           {images.length > 0 && (
             <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5">
               {images.map((src, i) => (
@@ -103,7 +106,7 @@ export function ProductForm({ categories, product }: { categories: { id: number;
                   <input type="hidden" name="images" value={src} />
                   <span className="relative block aspect-[4/5] overflow-hidden rounded-xl bg-cream">
                     <Image src={src} alt="" fill sizes="140px" className="object-cover" />
-                    {i === 0 && <span className="absolute left-1 top-1 rounded bg-ink px-1.5 text-[10px] font-bold text-cream">প্রধান</span>}
+                    {i < 2 && <span className="absolute left-1 top-1 rounded bg-ink px-1.5 text-[10px] font-bold text-cream">{i === 0 ? "সামনে · প্রধান" : "পেছনে"}</span>}
                   </span>
                   <span className="flex gap-1">
                     <button type="button" aria-label="আগে নিন" onClick={() => move(i, -1)} className="h-9 flex-1 rounded-lg bg-sand">←</button>

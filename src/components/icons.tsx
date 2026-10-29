@@ -74,3 +74,15 @@ export const WhatsAppIcon = ({ size = 24, ...p }: IconProps) => (
     <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 2s.8 2.3 1 2.5c.1.2 1.6 2.5 4 3.5 1.5.6 2 .7 2.8.6.4-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
   </svg>
 );
+export const MinusIcon = (p: IconProps) => (
+  <svg {...base(p)}><path d="M5 12h14" /></svg>
+);
+export const ZoomIcon = (p: IconProps) => (
+  <svg {...base(p)}><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5M11 8v6M8 11h6" /></svg>
+);
+export const TurnIcon = (p: IconProps) => (
+  <svg {...base(p)}><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3" /><path d="M18 3v4h-4M6 21v-4h4" /></svg>
+);
+export const ResetIcon = (p: IconProps) => (
+  <svg {...base(p)}><path d="M4 4v5h5" /><path d="M5 13a7 7 0 1 0 2-6.2L4 9" /></svg>
+);
