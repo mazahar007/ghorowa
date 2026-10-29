@@ -8,31 +8,13 @@ import { toBn } from "@/lib/format";
 import { ProductImage } from "./ProductImage";
 import { HangerStack, StageProgress } from "./HangerStack";
 import { ZoomPan } from "./ZoomPan";
+import { Segmented } from "./Segmented";
 import { bodies, defaultBody, Mannequin, type Body, type Side } from "./Mannequin";
 import { ChevronIcon, CloseIcon, TurnIcon, ZoomIcon } from "./icons";
 
 /** প্রথম ছবি সামনের দিক, দ্বিতীয় ছবি পেছনের দিক (অ্যাডমিনে এভাবেই সাজাতে বলা আছে)। */
 function sideOf(i: number): string | null {
   return i === 0 ? "সামনে" : i === 1 ? "পেছনে" : null;
-}
-
-function Segmented<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { id: T; label: string }[]; label: string }) {
-  return (
-    <div role="radiogroup" aria-label={label} className="glass-card flex gap-0.5 rounded-full p-1 text-sm font-bold">
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          role="radio"
-          aria-checked={value === o.id}
-          onClick={() => onChange(o.id)}
-          className={`h-9 rounded-full px-3.5 transition ${value === o.id ? "bg-ink text-cream" : "hover:bg-white"}`}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 /** পুরো স্ক্রিনে ছবি — জুম ইন/আউট, টেনে সরানো, সামনে/পেছনে বদলানো। */
@@ -110,7 +92,7 @@ function TryOn({ product }: { product: Product }) {
   return (
     <div className="relative h-[460px] overflow-hidden rounded-[28px] sm:h-[580px]">
       <ZoomPan className="absolute inset-0">
-                <div className="studio-wall h-full w-full px-6 pb-16 pt-16">
+        <div className="studio-wall h-full w-full px-6 pb-16 pt-16">
           <div key={`${body}-${side}`} className="h-full w-full animate-[turn_.55s_cubic-bezier(0.22,1,0.36,1)]">
             <Mannequin body={body} side={side} garment={garment} />
           </div>
