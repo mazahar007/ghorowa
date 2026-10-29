@@ -12,8 +12,8 @@ import { bodies, defaultBody, Mannequin, type Body, type Side } from "./Mannequi
 import { BagIcon, ChevronIcon, TurnIcon } from "./icons";
 import { toBn } from "@/lib/format";
 
-/** কমপক্ষে এতগুলো পণ্যে ছবি থাকলে তবেই হোম পেজে "পরিয়ে দেখুন" বাটন দেখায়। */
-const TRY_ON_MIN_PRODUCTS = 3;
+/** অন্তত একটা পণ্যে ছবি থাকলেই "পরিয়ে দেখুন" বাটন দেখায় (ছবি ছাড়া পণ্য ম্যানিকিনে আসে না)। */
+const TRY_ON_MIN_PRODUCTS = 1;
 
 /** ভাসমান কাচের কার্ড: নাম, দাম, সাইজ আর কার্টে যোগ — স্টেজ ছেড়ে না গিয়েই কেনা যায়। */
 function InfoCard({ product }: { product: Product }) {
