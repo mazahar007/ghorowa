@@ -9,12 +9,15 @@ export function ProductImage({
   sizes = "(max-width: 640px) 50vw, 280px",
   priority = false,
   className = "",
+  stage = false,
 }: {
   product: Pick<Product, "images" | "name">;
   index?: number;
   sizes?: string;
   priority?: boolean;
   className?: string;
+  /** শোরুম স্টেজে ছবি না থাকলে হালকা প্লেসহোল্ডার */
+  stage?: boolean;
 }) {
   const src = product.images[index];
   if (src) {
@@ -25,8 +28,17 @@ export function ProductImage({
         fill
         sizes={sizes}
         priority={priority}
+        draggable={false}
         className={`object-cover ${className}`}
       />
+    );
+  }
+  if (stage) {
+    return (
+      <div className={`absolute inset-0 flex flex-col items-center justify-center gap-3 bg-paper text-brand/35 ${className}`}>
+        <ShirtIcon size={96} strokeWidth={1} />
+        <span className="text-sm text-muted">ছবি শীঘ্রই</span>
+      </div>
     );
   }
   return (

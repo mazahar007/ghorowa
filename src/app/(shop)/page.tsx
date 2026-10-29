@@ -4,7 +4,7 @@ import { ageGroups } from "@/lib/labels";
 import { flashSaleEndsAt, heroSlides } from "@/config/home";
 import { Hero } from "@/components/Hero";
 import { ScrollStory, type StoryStep } from "@/components/ScrollStory";
-import { PremiumCollection } from "@/components/PremiumCollection";
+import { Showroom } from "@/components/Showroom";
 import { Reveal } from "@/components/Reveal";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Countdown } from "@/components/Countdown";
@@ -110,7 +110,7 @@ export default async function Home() {
         <ProductRail products={latest} />
       </section>
 
-      <PremiumCollection products={latest.slice(0, 5)} />
+      <Showroom products={latest.slice(0, 6)} eyebrow="GHOROWA SHOWROOM" title="শোরুম ঘুরে দেখুন" href="/category/kids-fashion?sort=new" />
 
       <section aria-label="বয়স অনুযায়ী কিনুন">
         <SectionHeader title="বয়স অনুযায়ী কিনুন" eyebrow="SHOP BY AGE" />
